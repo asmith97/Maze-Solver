@@ -1,10 +1,9 @@
 import System.IO
 import Data.List
 import System.Environment
---None should have previous positions too, but took off for quick testing
 data Tree a = None [(a,a)]| Leaf (a,a) [(a,a)]| Node (a,a) (Tree a) (Tree a) (Tree a) (Tree a) [(a,a)] deriving Show
 
---cite hacker rank as the insipration for the problem
+--This problem was inspired by the hackerrank.com Pacman searching algorithim exercises
 
 
 --modifiy to allow it to solve multiple boards with multiple start positions
@@ -18,11 +17,8 @@ main = do
     args <- getArgs
     board <- readFile (args !! 0)
     startCoord <- getLine
-    --endCoord <- getLine
-    --gridDim <- getLine
+    --check to make sure that the starting tuple is in a '-' or at the 'P' or at the '.'
     let startTuple = read startCoord :: (Int, Int)
-    --let endTuple = read endCoord :: (Int, Int)
-    --let gridTuple = read gridDim :: (Int, Int)
     let tree = buildTree (None [startTuple]) startTuple (lines board)
     let best = bestPath tree
     putStr board
@@ -39,7 +35,6 @@ type Board = [String]
 type Position = (Int, Int)
 
 getValidNeighbors :: Position -> Board -> [Position]
---getValidNeighbors _ [] = []
 --valid when x, y > 0 and less than the board dimensions (in the middle)
 getValidNeighbors (x,y) board = [(a,b) | (a,b) <- [(x, y+1), (x, y-1), (x+1, y), (x-1, y)], ((board !! b) !! a) /= '%']
 
@@ -75,24 +70,6 @@ buildTree (None previousPos) (x,y) board
         otherN = (filter (\pos -> isTarget pos board) neighbors)
         reachedTarget = length otherN == 1
 
-hasLeaf :: Tree a -> Bool
-hasLeaf (None _) = False
-hasLeaf (Leaf _ _) = True
-hasLeaf (Node _ a b c d _) = hasLeaf a || hasLeaf b || hasLeaf c || hasLeaf d
-
---want to find a node with a leaf, and then get the length of the list of places visited
-countSteps :: Tree a -> Int
-countSteps (Node _ a b c d _) = undefined
-
-numberVisited :: Tree a -> Int
-numberVisited (Leaf _ list) = length list
-
-
-numberLeafs :: Tree a -> Int
-numberLeafs (None _) = 0
-numberLeafs (Leaf _ _) = 1
-numberLeafs (Node _ a b c d _) = sum [numberLeafs a, numberLeafs b, numberLeafs c, numberLeafs d]
-
 leafLengthList :: Tree a -> [Int]
 leafLengthList (None _) = []
 leafLengthList (Leaf _ list) = [length list]
@@ -114,9 +91,6 @@ bestPath (Node _ a b c d _)
         ld = sort $ leafLengthList d
         smallest = minimum $ filter (\x -> not $ x == []) [la, lb, lc, lb]
 
-
-parseBoard :: String -> Board
-parseBoard = lines
 
 b = ["%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
     , "%-------%-%-%-----------%---%-----%-%"
