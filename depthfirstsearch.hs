@@ -16,13 +16,26 @@ main = do
     --want to make the board be stored in a file that will be read in as a command line argument
     args <- getArgs
     board <- readFile (args !! 0)
+    putStr "Input the starting coordinates (x,y): "
+    hFlush stdout
     startCoord <- getLine
     --check to make sure that the starting tuple is in a '-' or at the 'P' or at the '.'
     let startTuple = read startCoord :: (Int, Int)
-    let tree = buildTree (None [startTuple]) startTuple (lines board)
-    let best = bestPath tree
-    putStr board
-    putStr $ show best
+    let boardArray = lines board
+    let yMax = length boardArray
+    let xMax = length (boardArray !! 0)
+    if fst startTuple < xMax && snd startTuple < yMax then 
+        if ((boardArray !! snd startTuple) !! fst startTuple) /= '%' then
+            do 
+                let tree = buildTree (None [startTuple]) startTuple boardArray
+                let best = bestPath tree
+                putStr board
+                putStr $ show best
+        else
+            putStrLn "The inputted location is in a wall"
+    else
+        putStrLn "The inputted coordinates are not valid on the board"
+
 
     --code to parse the board, right now, make the board this:
     --let board = "%%%%%%%%%%%%%%%%%%%%\n%--------------%---%\n%-%%-%%-%%-%%-%%-%-%\n%--------P-------%-%\n%%%%%%%%%%%%%%%%%%-%\n%.-----------------%\n%%%%%%%%%%%%%%%%%%%%\n"
