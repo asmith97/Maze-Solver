@@ -36,14 +36,6 @@ main = do
     else
         putStrLn "The inputted coordinates are not valid on the board"
 
-
-    --code to parse the board, right now, make the board this:
-    --let board = "%%%%%%%%%%%%%%%%%%%%\n%--------------%---%\n%-%%-%%-%%-%%-%%-%-%\n%--------P-------%-%\n%%%%%%%%%%%%%%%%%%-%\n%.-----------------%\n%%%%%%%%%%%%%%%%%%%%\n"
-   {- let board = ["%%%%%%%%%%%%%%%%%%%%", "%--------------%---%"
-            , "%-%%-%%-%%-%%-%%-%-%", "%--------P-------%-%", "%%%%%%%%%%%%%%%%%%-%"
-            , "%.-----------------%", "%%%%%%%%%%%%%%%%%%%%"]-}
-    --mapM_ putStrLn board
-
 type Board = [String]
 type Position = (Int, Int)
 
@@ -104,7 +96,7 @@ bestPath (Node _ a b c d _)
         ld = sort $ leafLengthList d
         smallest = minimum $ filter (\x -> not $ x == []) [la, lb, lc, lb]
 
-
+--some sample boards for testing
 b = ["%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
     , "%-------%-%-%-----------%---%-----%-%"
     , "%-%%%%%%%-%-%%%-%-%%%-%%%-%%%%%%%-%-%"
