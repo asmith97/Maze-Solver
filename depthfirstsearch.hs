@@ -14,7 +14,7 @@ solveMult startTuple boards = fmap bestPath (fmap (\b -> buildTree (None [startT
 main :: IO ()
 main = do
     args <- getArgs
-    board <- readFile (args !! 0)
+    {-board <- readFile (args !! 0)
     putStr "Input the starting coordinates (x,y): "
     hFlush stdout
     startCoord <- getLine
@@ -33,7 +33,35 @@ main = do
         else
             putStrLn "The inputted location is in a wall"
     else
-        putStrLn "The inputted coordinates are not valid on the board"
+        putStrLn "The inputted coordinates are not valid on the board"-}
+    boards <- mapM readFile args
+    let bs = fmap lines boards
+    putStr "Input the starting coordinates (x,y): "
+    hFlush stdout
+    startCoord <- getLine
+    let posTuple = (read startCoord :: (Int, Int))
+    let validPos = check posTuple bs
+    if not validPos then
+            putStrLn "The inputted coordinates are not valid on the board or are in a wall"
+    else
+        do
+            let positions = solveMult posTuple bs
+            mapM_ (putStrLn . printSolution) positions
+
+printSolution :: [Position] -> String
+printSolution [] = "No solution given this initial value"
+--getting rid of the first element becuase it got double counted
+printSolution (a:as) = show as
+
+
+check :: Position -> [Board] -> Bool
+check _ [] = True
+check pos@(x,y) (a:as)
+    | x < xMax && y < yMax && ((a !! y) !! x) /= '%' = check pos as
+    | otherwise = False
+        where
+            yMax = length a
+            xMax = length (a !! 0)
 
 type Board = [String]
 type Position = (Int, Int)
