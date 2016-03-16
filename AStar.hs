@@ -1,7 +1,7 @@
 import System.IO
 import Data.List
 
-data Tree a = Root (a,a) | Node (Tree a) (a,a) Int Int deriving Show
+data Tree a = Root (a,a) Int | Node (Tree a) (a,a) Int Int Int deriving Show
 type Board = [String]
 type Position = (Int, Int)
 
@@ -16,17 +16,25 @@ board'' = ["%%%%", "%--.%"
             , "%%%%"]
 
 getListOfVisited :: Tree Int -> [(Int, Int)]
-getListOfVisited (Root a) = [a]
-getListOfVisited (Node parent a _ _) = a : getListOfVisited parent
+getListOfVisited (Root a _) = [a]
+getListOfVisited (Node parent a _ _ _) = a : getListOfVisited parent
 
-getG (Root _) = 0
-getG (Node _ _ g _) = g
+getG (Root _ _) = 0
+getG (Node _ _ g _ _) = g
 
-getF (Root _) = 0
-getF (Node _ _ _ f) = f
+getF (Root _ _) = 0
+getF (Node _ _ _ f _) = f
 
-getParent (Node parent _ _ _) = parent
-getParent a@(Root _) = a
+getParent (Node parent _ _ _ _) = parent
+getParent a@(Root _ _) = a
+
+
+incrementSkip (Root a skip) = (Root a (skip + 1))
+incrementSkip (Node a b c d skip) = (Node a b c d (skip + 1))
+
+parentIncrementSkip (Root a b) = (Root a b)
+parentIncrementSkip (Node (Root a skip) _ _ _ _)= (Root a (skip + 1))
+parentIncrementSkip (Node (Node a b c d skip) _ _ _ _) = (Node a b c d (skip + 1))
 
 --WRITE FREE FOOD THING THAT PARSES YOUR EMAILS
 
@@ -40,8 +48,8 @@ isTarget (x,y) board = ((board !! y) !! x) == '.'
 --Cost of moving to a given position given the position of the goal
 --we will store the distances as the distance squared
 calculateCost :: Tree Int -> Position -> Int
-calculateCost (Node parent (x,y) g h) (goalX, goalY) = g + (goalY - y)^2 + (goalX - x) ^2
-calculateCost (Root (x,y)) (goalX, goalY) = (goalY - y)^2 + (goalX - x) ^2
+calculateCost (Node parent (x,y) g h _) (goalX, goalY) = g + (goalY - y)^2 + (goalX - x) ^2
+calculateCost (Root (x,y) _) (goalX, goalY) = (goalY - y)^2 + (goalX - x) ^2
 
 calcCost (x,y) (goalX, goalY) = (goalY - y)^2 + (goalX - x) ^2
 
@@ -52,12 +60,12 @@ calcCost (x,y) (goalX, goalY) = (goalY - y)^2 + (goalX - x) ^2
 
 --want to make sure it doesn't go back on itself
 validTrees :: Tree Int -> Board -> Position -> [Tree Int]
-validTrees t@(Root (x,y)) board goal = (fmap (\a -> Node (Root (x,y)) a (calcCost (x,y) a) (calcCost a goal) )) $ filter (\x -> notElem x (getListOfVisited t)) $ getValidNeighbors (x,y) board
+validTrees t@(Root (x,y) skip) board goal = (fmap (\a -> Node (Root (x,y) skip) a (calcCost (x,y) a) (calcCost a goal) skip)) $ filter (\x -> notElem x (getListOfVisited t)) $ getValidNeighbors (x,y) board
 --validTrees t@(Root (x,y)) board goal = (fmap (\a -> Node (Root (x,y)) a (calcCost (x,y) a) (calcCost a goal) )) $ getValidNeighbors (x,y) board
 
 {-validTrees (Node parent (x,y) _ _) board goal = fmap (func goal) $ getValidNeighbors (x,y) board
     where func goal pos = Node parent pos (getG parent + getF parent) (calcCost pos goal) -}
-validTrees new@(Node parent (x,y) g h) board goal =  (fmap (\a -> Node new a (g + (calcCost (x,y) a)) (calcCost a goal))) $ filter (\x -> notElem x (getListOfVisited new)) $ getValidNeighbors (x,y) board
+validTrees new@(Node parent (x,y) g h skip) board goal =  (fmap (\a -> Node new a (g + (calcCost (x,y) a)) (calcCost a goal) skip)) $ filter (\x -> notElem x (getListOfVisited new)) $ getValidNeighbors (x,y) board
 --validTrees new@(Node parent (x,y) g h) board goal =  (fmap (\a -> Node new a (g + (calcCost (x,y) a)) (calcCost a goal))) $ getValidNeighbors (x,y) board
 
     --where func goal pos = Node new pos (g+h) (calcCost pos goal)
@@ -68,7 +76,7 @@ validTrees new@(Node parent (x,y) g h) board goal =  (fmap (\a -> Node new a (g 
 --search tree board goal = fmap (\a -> search a board goal) 
 
 
-r = Root (1,1) :: Tree Int
+r = Root (1,1) 0:: Tree Int
 g = (2,5) :: Position
 
 printBoard = mapM_ putStrLn board
@@ -111,24 +119,36 @@ search start@(Node parent (x,y) g h) board goal [] = if (x,y) == goal then start
 search (Root (x,y)) board goal (a:as) = undefined
 search (Node parent (x,y) g h) board goal visited = undefined-}
 
-search start@(Root (x,y)) board goal skip parentSkip [] = if (x,y) == goal then start
+--maybe use the list to pass the branch that you shouldn't go down back??
+search start@(Root (x,y) skip) board goal [] = if (x,y) == goal then start
     else
-        search (sortedList !! skip) board goal skip parentSkip []
+        if skip < length sortedList then
+            --search (parentIncrementSkip start) board goal []
+            search (sortedList !! skip) board goal []
+        else
+            --OH!!!!!
+            --THE ISSUE IS WHEN IT COME BACK TO HERE THE SKIP DOESN'T SEEM TO HAVE BEEN INCREMENTED
+            --NOT SURE WHY THAT IS THE CASE THOUGH
+            --search (sortedList !! skip) board goal []
+            start
     where
         sortedList = sortTreeList $ validTrees start board goal
 
-search start@(Node parent (x,y) g h) board goal skip parentSkip [] = if (x,y) == goal then start 
+search start@(Node parent (x,y) g h skip) board goal [] = if (x,y) == goal then start 
     else
-        if length sortedList > skip then search (sortedList !! skip) board goal skip parentSkip []
+        if length sortedList > skip then search (sortedList !! skip) board goal []
             else
                 if length sortedList > skip + 1 then 
-                    search start board goal (skip + 1) parentSkip []
+                    search (incrementSkip start) board goal []
                 else
-                    search parent board goal (parentSkip +1) 0 []
+                    search (parentIncrementSkip start) board goal []
+                   -- search parent board goal []
                 --if after adding one to skip its still less than the length, then
                 --increment skip and do the search on the same one
                 --if it is equal to skip then want to do the search on the 
                 --parent after incrementing the skip by one
+                --maybe its keeping the wrong paths it traverses on its list
+                --and then the valid trees thing isn't working properly with the skips becasue of that
     where
         sortedList = sortTreeList $ validTrees start board goal
 
