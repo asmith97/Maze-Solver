@@ -25,6 +25,9 @@ getG (Node _ _ g _) = g
 getF (Root _) = 0
 getF (Node _ _ _ f) = f
 
+getParent (Node parent _ _ _) = parent
+getParent a@(Root _) = a
+
 --WRITE FREE FOOD THING THAT PARSES YOUR EMAILS
 
 getValidNeighbors :: Position -> Board -> [Position]
@@ -84,7 +87,7 @@ Find the direction which has the smallest associated cost
 Add this direction to the list of places we've gone
 Don't double cross for as long as we're going down this branch
 If there are no more valid moves, then end this branch, return back to the 
-START, and then pick the one with the second smalelst cost
+START, and then pick the one with the second smallest cost
 -}
 
 --for now just keep on returning the first element of the list
@@ -97,15 +100,37 @@ START, and then pick the one with the second smalelst cost
 --need to get it to be able to back track
 --the condition for it to back track is when:
 --want to avoid the path doubling back on itself
-
+{-}
 search :: Tree Int -> Board -> Position -> [Position] -> Tree Int
 search start@(Root (x,y)) board goal [] = if (x,y) == goal then start else search (head $ sortTreeList (validTrees start board goal)) board goal []
 --if it's an empty list, want to go to the second best one of the parent (if that exists)
 --if that doesn't then keep going up
+--could implement it with another variable argument that's a counter of the number to skip
 search start@(Node parent (x,y) g h) board goal [] = if (x,y) == goal then start else search (head $ sortTreeList (validTrees start board goal)) board goal []
 --this should never happen
 search (Root (x,y)) board goal (a:as) = undefined
-search (Node parent (x,y) g h) board goal visited = undefined
+search (Node parent (x,y) g h) board goal visited = undefined-}
+
+search start@(Root (x,y)) board goal skip parentSkip [] = if (x,y) == goal then start
+    else
+        search (sortedList !! skip) board goal skip parentSkip []
+    where
+        sortedList = sortTreeList $ validTrees start board goal
+
+search start@(Node parent (x,y) g h) board goal skip parentSkip [] = if (x,y) == goal then start 
+    else
+        if length sortedList > skip then search (sortedList !! skip) board goal skip parentSkip []
+            else
+                if length sortedList > skip + 1 then 
+                    search start board goal (skip + 1) parentSkip []
+                else
+                    search parent board goal (parentSkip +1) 0 []
+                --if after adding one to skip its still less than the length, then
+                --increment skip and do the search on the same one
+                --if it is equal to skip then want to do the search on the 
+                --parent after incrementing the skip by one
+    where
+        sortedList = sortTreeList $ validTrees start board goal
 
 
  
