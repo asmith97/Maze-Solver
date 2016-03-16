@@ -1,9 +1,11 @@
 import System.IO
 import Data.List
 
-data Tree a = Root (a,a) Int | Node (Tree a) (a,a) Int Int Int deriving Show
+data Tree a = Root (a,a) Int | Node (Tree a) (a,a) Int Int Int deriving (Show, Eq)
 type Board = [String]
 type Position = (Int, Int)
+
+b = ["%%%%%","%___%","%-%-%","%%%-%","%---%","%%%%%"]
 
 board = ["%%%%%%%%%%%%%%%%%%%%", "%--------------%---%"
             , "%-%%-%%-%%-%%-%%-%-%", "%--------P-------%-%", "%%%%%%%%%%%%%%%%%%-%"
@@ -86,6 +88,33 @@ sortTreeList [] = []
 sortTreeList (a:as) = (sortTreeList lower) ++ [a] ++ (sortTreeList upper) where
     lower = [x | x <- as, (getG x + getF x) < (getG a + getF a)]
     upper = [x | x <- as, (getG x + getF x) > (getG a + getF a)]
+
+
+branch :: [Tree Int] -> Board -> Position -> Tree Int
+branch [] board goal = Root (0,0) 0
+branch (a:as) board goal
+    | result == Root (0,0) 0 = branch as board goal
+    | otherwise = result
+        where
+            result = findPath a board goal
+
+
+findPath start@(Root (x,y) skip) board goal = if (x,y) == goal then start
+    else
+        --return this in the case where there is no solution
+        if null sorted then (Root (0,0) 0)
+        else
+            branch sorted board goal
+    where 
+        sorted = sortTreeList $ validTrees start board goal
+
+findPath node@(Node parent (x,y) g h skip) board goal = if (x,y) == goal then node
+    else
+        if null sorted then (Root (0,0) 0)
+        else
+            branch sorted board goal
+    where
+        sorted = sortTreeList $ validTrees node board goal
 
 
 {-
