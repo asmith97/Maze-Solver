@@ -5,35 +5,12 @@ data Tree a = None [(a,a)]| Leaf (a,a) [(a,a)]| Node (a,a) (Tree a) (Tree a) (Tr
 
 --This problem was inspired by the hackerrank.com Pacman searching algorithim exercises
 
-
---modifiy to allow it to solve multiple boards with multiple start positions
 solveMult :: Position -> [Board] -> [[Position]]
 solveMult startTuple boards = fmap bestPath (fmap (\b -> buildTree (None [startTuple]) startTuple b)  boards)
 
---TODO: SOLVE EACH BOARD FILE PASSED IN
 main :: IO ()
 main = do
     args <- getArgs
-    {-board <- readFile (args !! 0)
-    putStr "Input the starting coordinates (x,y): "
-    hFlush stdout
-    startCoord <- getLine
-    --check to make sure that the starting tuple is in a '-' or at the '.'
-    let startTuple = read startCoord :: (Int, Int)
-    let boardArray = lines board
-    let yMax = length boardArray
-    let xMax = length (boardArray !! 0)
-    if fst startTuple < xMax && snd startTuple < yMax then 
-        if ((boardArray !! snd startTuple) !! fst startTuple) /= '%' then
-            do 
-                let tree = buildTree (None [startTuple]) startTuple boardArray
-                let best = bestPath tree
-                putStrLn board
-                if null best then putStrLn "No winning path" else putStrLn $ show best
-        else
-            putStrLn "The inputted location is in a wall"
-    else
-        putStrLn "The inputted coordinates are not valid on the board"-}
     boards <- mapM readFile args
     let bs = fmap lines boards
     putStr "Input the starting coordinates (x,y): "
@@ -42,17 +19,18 @@ main = do
     let posTuple = (read startCoord :: (Int, Int))
     let validPos = check posTuple bs
     if not validPos then
-            putStrLn "The inputted coordinates are not valid on the board or are in a wall"
+            putStrLn "The inputted coordinates are not valid on the boards or are in a wall"
     else
         do
             let positions = solveMult posTuple bs
-            mapM_ (putStrLn . printSolution) positions
+            let cardinals = fmap (\a -> "Board #" ++ show a ++ "\n") [1..(length args)]
+            let answers = zipWith (++) cardinals (fmap printSolution positions)
+            mapM_ putStrLn answers
 
 printSolution :: [Position] -> String
 printSolution [] = "No solution given this initial value"
 --getting rid of the first element becuase it got double counted
-printSolution (a:as) = show as
-
+printSolution (a:as) = "Has length " ++ (show $ length as) ++ "\n" ++ show as
 
 check :: Position -> [Board] -> Bool
 check _ [] = True
