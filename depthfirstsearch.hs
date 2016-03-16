@@ -13,13 +13,12 @@ solveMult startTuple boards = fmap bestPath (fmap (\b -> buildTree (None [startT
 --TODO: SOLVE EACH BOARD FILE PASSED IN
 main :: IO ()
 main = do
-    --want to make the board be stored in a file that will be read in as a command line argument
     args <- getArgs
     board <- readFile (args !! 0)
     putStr "Input the starting coordinates (x,y): "
     hFlush stdout
     startCoord <- getLine
-    --check to make sure that the starting tuple is in a '-' or at the 'P' or at the '.'
+    --check to make sure that the starting tuple is in a '-' or at the '.'
     let startTuple = read startCoord :: (Int, Int)
     let boardArray = lines board
     let yMax = length boardArray
@@ -29,8 +28,8 @@ main = do
             do 
                 let tree = buildTree (None [startTuple]) startTuple boardArray
                 let best = bestPath tree
-                putStr board
-                putStr $ show best
+                putStrLn board
+                if null best then putStrLn "No winning path" else putStrLn $ show best
         else
             putStrLn "The inputted location is in a wall"
     else
@@ -44,7 +43,7 @@ getValidNeighbors :: Position -> Board -> [Position]
 getValidNeighbors (x,y) board = [(a,b) | (a,b) <- [(x, y+1), (x, y-1), (x+1, y), (x-1, y)], ((board !! b) !! a) /= '%']
 
 board = ["%%%%%%%%%%%%%%%%%%%%", "%--------------%---%"
-            , "%-%%-%%-%%-%%-%%-%-%", "%--------P-------%-%", "%%%%%%%%%%%%%%%%%%-%"
+            , "%-%%-%%-%%-%%-%%-%-%", "%----------------%-%", "%%%%%%%%%%%%%%%%%%-%"
             , "%.-----------------%", "%%%%%%%%%%%%%%%%%%%%"]
 
 board' = ["%%%%%%%%%%%%%%%%%%%%", "%-------------.%---%"
@@ -94,7 +93,8 @@ bestPath (Node _ a b c d _)
         lb = sort $ leafLengthList b
         lc = sort $ leafLengthList c
         ld = sort $ leafLengthList d
-        smallest = minimum $ filter (\x -> not $ x == []) [la, lb, lc, lb]
+        filtered = filter (\x -> not $ x == []) [la, lb, lc, lb]
+        smallest = if null filtered then [] else minimum filtered
 
 --some sample boards for testing
 b = ["%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
@@ -132,7 +132,7 @@ b = ["%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
     , "%-%-%%%-%-%-%-%-%%%%%%%%%-%-%-%-%-%-%"
     , "%---%---%---%-----------------%-----%"
     , "%-%-%-%-%%%-%%%-%%%%%%%-%%%-%%%-%%%-%"
-    , "%.%-%-%-------%---%-------%---%-%--P%"
+    , "%.%-%-%-------%---%-------%---%-%---%"
     , "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"]
 
 
@@ -263,6 +263,6 @@ b' = ["%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
     , "%-%-%%%-%-%-%-%-%%%%%%%%%-%-%-%-%-%-%"
     , "%---%---%---%-----------------%-----%"
     , "%-%-%-%-%%%-%%%-%%%%%%%-%%%-%%%-%%%-%"
-    , "%-%-%-%-------%---%-------%---%-%--P%"
+    , "%-%-%-%-------%---%-------%---%-%---%"
     , "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"]
 
